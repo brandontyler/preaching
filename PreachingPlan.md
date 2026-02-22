@@ -611,29 +611,53 @@ This is a **collaborative learning project** with two purposes:
 1. **Build PSR** — take the idea from plan to working product on Azure
 2. **Show the process** — Brandon demonstrates how to use AI coding agents to go from idea to code, while learning Azure alongside his friend who knows the platform
 
-### Development Tooling — Azure Developer Workflow
+### Development Tooling — Different Tools, Same Repo
 
-Since this project lives on Azure, here are the CLI tools for the dev workflow:
+Each developer uses the AI tools they have access to. The code is the common ground.
 
-**Core Azure CLI Tools:**
-- **`az` (Azure CLI)** — Azure resource management (equivalent of `aws` CLI). Install: `curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash`
-- **`azd` (Azure Developer CLI)** — scaffolds, provisions, and deploys Azure apps from templates. Think of it as Azure's answer to SAM/CDK. Install: `curl -fsSL https://aka.ms/install-azd.sh | bash`
-- **`func` (Azure Functions Core Tools)** — local dev/test for Azure Functions. Install: `npm i -g azure-functions-core-tools@4`
-- **`bicep`** — Azure IaC (bundled with `az`). Equivalent of CloudFormation/CDK
+**Brandon's Stack:**
+- **Claude Code / kiro-cli** — primary AI coding agent (terminal-first, autonomous, reads codebase and drives edits)
+- **`az` CLI + `azd`** — learning Azure alongside the project
+- Workflow: terminal-driven, agent does the heavy lifting
 
-**AI Coding Agents (Terminal-First):**
-- **Claude Code / kiro-cli** — Brandon's primary agent. Cloud-agnostic, works great with Azure projects. This is what we'll use day-to-day for coding
-- **GitHub Copilot CLI (`gh copilot`)** — Microsoft's AI CLI assistant. Good for Azure-specific command suggestions and explanations. Install: `gh extension install github/gh-copilot`
-- **`az interactive`** — Azure CLI's built-in AI-assisted interactive mode with command suggestions
+**Friend's Stack (Microsoft Employee — Full Access):**
+- **GitHub Copilot** (VS Code) — inline completions, chat, code generation. Backed by GPT-4o. Free with Microsoft employment
+- **GitHub Copilot CLI** (`gh copilot`) — terminal command suggestions and explanations
+- **GitHub Copilot Coding Agent** — can be assigned GitHub issues and works autonomously in PRs (runs in cloud, not local). Closest Microsoft equivalent to Claude Code
+- **`az` CLI + `azd` + `func`** — already knows these
+- Workflow: VS Code-driven, Copilot assists inline
 
-**Why Claude Code / kiro-cli for an Azure project?**
-AI coding agents don't care what cloud you're on — they read code, write code, and run commands. The Azure-specific knowledge comes from docs and the `az`/`azd` CLIs. Using Claude Code here lets Brandon teach the AI agent workflow he knows while building on Azure infrastructure his friend knows.
+**The Gap (and How We Bridge It):**
+Microsoft doesn't have a true Claude Code equivalent — a local, terminal-first, autonomous coding agent that reads your whole codebase, makes multi-file edits, runs commands, and iterates in a loop. Copilot is excellent at *assisting* but not at *driving*.
 
-**Setup Checklist (Both Developers):**
+How we work around this:
+1. Both devs work on the same GitHub repo — tool choice is personal, code is shared
+2. Brandon screen-shares / works in Discord so friend can see the CLI agent workflow in action
+3. Friend uses Copilot Coding Agent for autonomous PR work (assign it a GitHub issue, it opens a PR)
+4. For pair sessions: Brandon drives with Claude Code while friend watches and learns the agent-first approach
+5. GPT-4o (which powers Copilot) is a strong model — the gap is in the *agent harness*, not the model quality
+
+**Core Azure CLI Tools (Both Developers):**
+- **`az` (Azure CLI)** — Azure resource management. Install: `curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash`
+- **`azd` (Azure Developer CLI)** — scaffold, provision, deploy. Install: `curl -fsSL https://aka.ms/install-azd.sh | bash`
+- **`func` (Azure Functions Core Tools)** — local Functions dev/test. Install: `npm i -g azure-functions-core-tools@4`
+- **`bicep`** — Azure IaC (bundled with `az`)
+
+**Setup Checklist:**
+
+Brandon:
 - [ ] Install `az` CLI and run `az login`
 - [ ] Install `azd` CLI
 - [ ] Install `func` (Azure Functions Core Tools)
-- [ ] Install `gh` CLI + `gh copilot` extension
-- [ ] Set up Claude Code or kiro-cli
-- [ ] Create shared Azure resource group for the project
+- [ ] Claude Code / kiro-cli (already set up)
+
+Friend:
+- [ ] `az` CLI + `azd` + `func` (likely already has these)
+- [ ] VS Code + GitHub Copilot (has via Microsoft)
+- [ ] `gh` CLI + Copilot CLI extension: `gh extension install github/gh-copilot`
+- [ ] Enable Copilot Coding Agent on the shared repo (Settings → Copilot → Coding agent)
+
+Shared:
+- [ ] Create shared Azure resource group
 - [ ] Set up GitHub repo with branch protection
+- [ ] Add both devs as collaborators
