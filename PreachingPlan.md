@@ -485,6 +485,91 @@ User uploads video/audio file directly
 
 ---
 
+## Proof of Concept (Completed)
+
+A minimal end-to-end POC lives in `poc/psr_poc.py`. It validates the core pipeline: audio in → transcript → AI analysis → PSR score out.
+
+### What the POC Does
+
+1. **Transcribe** — Takes an MP3 file, sends it to OpenAI Whisper API, gets back timestamped text
+2. **Analyze** — Sends the transcript to GPT-4o with a structured prompt requesting: delivery score, filler word counts, scripture references, segment breakdown, strengths, and improvements
+3. **Score** — Produces a PSR Delivery score (0-100) with full breakdown
+4. **Output** — Writes `poc/psr_result.json` with the complete analysis and prints a scorecard to the terminal
+
+### How to Run It
+
+```bash
+# Mock mode — no API key needed, uses a built-in sample sermon transcript
+python3 poc/psr_poc.py --mock
+
+# Real mode — transcribes and analyzes an actual MP3 file
+export OPENAI_API_KEY="sk-..."
+python3 poc/psr_poc.py path/to/sermon.mp3
+```
+
+### What the POC Proved
+
+- The full pipeline works: audio → text → structured AI analysis → scored output
+- GPT-4o can reliably return structured JSON with filler word counts, scripture detection, segment classification, and a 0-100 score
+- Whisper handles sermon-length audio and produces clean transcripts
+- The mock run scored a sample Romans 8:28 sermon at **74/100** on Delivery, caught 13 filler words, identified 2 scripture references, and generated actionable strengths/improvements
+
+### What's Different from the Full Platform
+
+| POC | Full Platform |
+|-----|--------------|
+| OpenAI Whisper | Azure AI Speech Service (with diarization) |
+| OpenAI GPT-4o | Azure OpenAI GPT-4 |
+| Scores 1 category (Delivery) | Scores all 8 PSR categories |
+| CLI script | Web app with upload UI |
+| JSON file output | Cosmos DB + frontend scorecard |
+| No auth | Azure AD B2C |
+| No scripture verification | Commentary corpus RAG |
+
+### Beginner's Guide: How This Pipeline Works (Step by Step)
+
+If you're new to building AI-powered apps, here's what's happening under the hood and how to learn from it:
+
+**Step 1: Understand the input/output contract**
+- Input: an audio file (MP3, WAV, etc.)
+- Output: a structured JSON object with scores, counts, and text analysis
+- Everything in between is just transforming data from one shape to another
+
+**Step 2: Audio → Text (Transcription)**
+- The Whisper API (or Azure AI Speech) takes raw audio and returns text with timestamps
+- This is a "black box" API call — you send a file, you get text back
+- Key concept: **API as a service** — you don't train the model, you just call it
+- Try it: change the audio file and see how the transcript changes
+- Learn more: [OpenAI Whisper docs](https://platform.openai.com/docs/guides/speech-to-text), [Azure AI Speech docs](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/)
+
+**Step 3: Text → Structured Analysis (LLM prompting)**
+- The transcript text is sent to GPT-4o with a **system prompt** that tells it exactly what JSON structure to return
+- This is **prompt engineering** — the art of telling the AI what you want in a way it understands
+- Key concept: `response_format={"type": "json_object"}` forces the model to return valid JSON (no markdown, no prose)
+- Try it: edit the system prompt in `analyze()` to add a new field (e.g., `"humor_count"`) and see it appear in the output
+- Learn more: [OpenAI structured outputs](https://platform.openai.com/docs/guides/structured-outputs)
+
+**Step 4: Display the results**
+- The script just prints to terminal and writes a JSON file
+- In the full platform, this becomes a web UI with charts and gauges
+- Key concept: **separation of concerns** — the analysis engine doesn't care how results are displayed
+
+**How to experiment:**
+1. Run `--mock` first to see the flow without any API costs
+2. Get an OpenAI API key from [platform.openai.com](https://platform.openai.com)
+3. Find a sermon MP3 (most churches post them online) and run it through
+4. Edit the system prompt in `analyze()` to score different things
+5. Compare results across different sermons — does the scoring feel right?
+
+**Key programming concepts used:**
+- **API calls** — sending HTTP requests to external services (Whisper, GPT-4o)
+- **JSON parsing** — converting text responses into structured data
+- **Prompt engineering** — crafting instructions for an LLM to get reliable, structured output
+- **CLI argument parsing** — `argparse` for handling command-line flags
+- **File I/O** — reading audio files, writing JSON results
+
+---
+
 ## Next Steps
 
 ### Phase 0.5 — Core Pipeline (validate the PSR concept)
