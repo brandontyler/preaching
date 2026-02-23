@@ -647,6 +647,35 @@ If you're new to building AI-powered apps, here's what's happening under the hoo
 
 ---
 
+## Post-MVP: AWS vs Azure Head-to-Head Comparison
+
+Once both cloud stacks are deployed and processing sermons, run a structured comparison:
+
+**Deployment Complexity**
+- Lines of IaC (Bicep vs CDK/CloudFormation)
+- Number of services to configure
+- Time from zero to deployed (first deploy)
+- CI/CD pipeline complexity
+
+**Performance**
+- Cold start latency (Functions vs Lambda)
+- End-to-end sermon processing time (upload → score ready)
+- API response times under load
+
+**Cost**
+- Monthly run cost at idle / low usage (MVP scale)
+- Cost per sermon processed
+- Free tier coverage — what's actually free vs what bleeds over
+
+**Developer Experience**
+- Local dev/debug story
+- Logging & observability setup effort
+- How easy is it to iterate and redeploy
+
+*Tracked as bead `bd-1ym`.*
+
+---
+
 ## Team & Collaboration
 
 ### Who's Building This
