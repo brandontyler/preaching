@@ -356,19 +356,26 @@ The goal: **upload a sermon, get a score, see the results.** Nothing else.
 
 ### In Scope
 - Upload audio file (MP3, WAV, M4A — audio only, skip video transcoding for now)
-- Basic auth (Azure AD B2C — email signup only, no social login yet)
+- **No auth for MVP** — skip Azure AD B2C, just get the pipeline working. Add auth in Phase 1
 - Transcription via Azure AI Speech (with timestamps)
 - Segment classification via Azure OpenAI (scripture, teaching, anecdote, application, etc.)
 - Scripture detection (identify references, verify against Bible text)
 - PSR scoring — all 8 categories + composite score
-- **One page that matters:** sermon detail page with scorecard, transcript, segment timeline
-- Upload page (simple drag-and-drop, tag pastor name + church)
-- Home page (list of recently analyzed sermons — no ranking, just a feed)
+- **Include open-source analysis tools in MVP** — textstat (readability) and Parselmouth (pitch/volume) are proven from POC #3 and trivial to add. Feed pre-computed metrics to GPT-4 for more consistent scoring
+- **Simple web UI** (Next.js on Azure Static Web Apps):
+  - Upload page — drag-and-drop audio file, tag pastor name + church
+  - Home page — list of recently analyzed sermons (no ranking, just a feed)
+  - Sermon detail page — PSR scorecard, transcript, segment timeline
+  - **Processing status** — after upload, show a waiting/progress state in the UI while the sermon is being analyzed (e.g., "Analyzing your sermon... this takes a few minutes"). Poll for completion or use a simple status check
 - English only
 - Max 1 hour sermon length (keeps processing costs low while proving the concept)
+- **TBD: Error handling / retry strategy** for the processing pipeline — need to decide how to handle transcription failures, OpenAI timeouts, partial results
+- **TBD: Scoring calibration strategy** — how do we validate that PSR scores are meaningful and consistent? Need a plan for benchmarking against known-good sermons (Piper baseline from POC #3 is a start)
+- **NOTE:** Need to set up cost monitoring / budget alerts on Azure to avoid surprise bills during development. Decide on approach before deploying
 
 ### Explicitly NOT in MVP
 - Video upload / transcoding (audio only — way simpler pipeline)
+- **Auth** — no Azure AD B2C for MVP. No login, no accounts. Add in Phase 1
 - Social login (Google/Microsoft/Apple) — email-only auth is fine for now
 - Pastor profiles / claiming / opt-out
 - Leaderboards
@@ -391,16 +398,15 @@ The goal: **upload a sermon, get a score, see the results.** Nothing else.
 | Service | Purpose |
 |---------|---------|
 | **Static Web Apps** | Next.js frontend (free tier) |
-| **Azure AD B2C** | Email auth (free up to 50K MAU) |
 | **Azure Functions** | API + processing logic (consumption plan) |
 | **Durable Functions** | Pipeline orchestration |
 | **Blob Storage** | Store uploaded audio files |
 | **AI Speech Service** | Transcription with timestamps |
 | **Azure OpenAI (GPT-4)** | Analysis, scoring, segment classification |
-| **Cosmos DB** | Sermon metadata + results (serverless tier) |
+| **Cosmos DB** | Sermon metadata + results (serverless tier) — *TBD: friend to confirm this is the right choice vs simpler alternatives* |
 | **Key Vault** | Secrets |
 
-**Not needed for MVP:** API Management, Service Bus, Event Grid, Redis Cache, AI Search, Media Services, Front Door, AI Language Service, Monitor/App Insights. Add them when scale demands it.
+**Not needed for MVP:** API Management, Azure AD B2C (no auth for MVP), Service Bus, Event Grid, Redis Cache, AI Search, Media Services, Front Door, AI Language Service, Monitor/App Insights. Add them when scale demands it.
 
 ### MVP Estimated Cost
 ~$20-50/mo during development (Cosmos serverless, Functions consumption, pay-per-sermon for Speech + OpenAI). No fixed-cost services.
@@ -622,19 +628,18 @@ If you're new to building AI-powered apps, here's what's happening under the hoo
 1. Set up Azure resource group + Bicep templates for minimal services (Functions, Blob, Cosmos serverless, Speech, OpenAI, Key Vault)
 2. Build upload → transcribe → store pipeline (audio only, Durable Functions orchestration)
 3. Build PSR scoring engine with Azure OpenAI (all 8 categories, using GPT-4's built-in Bible knowledge)
-4. Build frontend: upload page + sermon detail page with scorecard, transcript, segment timeline
-5. Basic auth with Azure AD B2C (email only)
-6. Deploy to dev environment, test with real sermons
+4. Build frontend: upload page + sermon detail page with scorecard, transcript, segment timeline, processing status/waiting state
+5. Deploy to dev environment, test with real sermons
 
 ### Phase 1 — Public Launch
+6. Add auth with Azure AD B2C (email signup, then social login)
 7. Add video upload support (Media Services for audio extraction)
 8. Build commentary corpus RAG for denomination-aware Biblical Accuracy scoring
 9. Add pastor profiles, claiming workflow, and opt-out mechanism
 10. Add leaderboards and search (basic full-text first)
 11. Content moderation pipeline (automated checks + admin review queue)
-12. Social login (Google/Microsoft/Apple)
-13. Extend to 2-hour sermon support
-14. Polish, test, deploy to production
+12. Extend to 2-hour sermon support
+13. Polish, test, deploy to production
 
 ### Phase 2 — Growth
 15. Semantic/vector search upgrade (AI Search)
@@ -842,7 +847,7 @@ python3 poc/scripture_analyzer.py --compare    # Also compare against Spurgeon
 
 ## Open-Source Analysis Tools (Supplement to Azure Services)
 
-These Python libraries run alongside Azure services to give us metrics that cloud APIs don't provide out of the box. Not needed for MVP — add in Phase 1+.
+These Python libraries run alongside Azure services to give us metrics that cloud APIs don't provide out of the box. **textstat and Parselmouth are included in MVP** (proven in POC #3, trivial to add). Others are Phase 1+.
 
 ### ⭐ Top Picks for PSR
 
